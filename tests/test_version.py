@@ -1,5 +1,5 @@
 """Tests"""
-from ExternalDataReco import __version__
+from external_data_reco import __version__
 
 
 def test_version():
