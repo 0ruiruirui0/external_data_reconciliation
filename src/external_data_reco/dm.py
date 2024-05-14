@@ -7,9 +7,9 @@ import logging
 import pandas as pd
 from datetime import datetime
 from data.reader import read_excel
-from data.subject_info import get_subject_info
+from data.sas_data import get_subject_info
 from data.external_data import load_external_data
-from utils.common import compute_flags_and_vars
+from utils.common import compute_flags_and_vars_dm
 
 
 def external_data_reco_dm(data_path, external_path, output_path) -> pd.DataFrame:
@@ -43,6 +43,6 @@ def external_data_reco_dm(data_path, external_path, output_path) -> pd.DataFrame
     # TODO：转化为读取dictionary的写法
     data["SEX_trans"] = data.apply(lambda x: {"Male": "M", "Female": "F"}.get(x["SEX_y"], None), axis=1)
     # 反馈比较结果
-    data = data.apply(compute_flags_and_vars, axis=1)
+    data = data.apply(compute_flags_and_vars_dm, axis=1)
     # Save data
     return data

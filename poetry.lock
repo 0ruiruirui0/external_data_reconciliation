@@ -1035,6 +1035,19 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "sas7bdat"
+version = "2.2.3"
+description = "A sas7bdat file reader for Python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "sas7bdat-2.2.3.tar.gz", hash = "sha256:484c609d962442203c15bc719a638de992a23cd13bc1971a5af6dfb0daf9f797"},
+]
+
+[package.dependencies]
+six = ">=1.8.0"
+
+[[package]]
 name = "setuptools"
 version = "69.5.1"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
@@ -1280,4 +1293,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "1d2e21edfbc5e37e005f22dfd4fd3c6894eca25d54dd56b604bae1851d7be727"
+content-hash = "0beaf7cb7727305a8fc2b987b61fd66c664d1b06b63be577e15512cce6412e3d"
