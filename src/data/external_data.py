@@ -12,8 +12,8 @@ def load_external_data(external_path):
 
 
 def load_mapping_rules(external_path, dict_name, key_list, output_value):
-    matching_rules_path = external_path + "/matching_rules.xlsx"
-    df = pd.read_excel(matching_rules_path, sheet_name=dict_name, header=0)
+    # matching_rules_path = external_path + "matching_rules.xlsx"
+    df = read_excel(external_path,"matching_rules", dict_name)
     df = df.drop_duplicates(keep="first")
     # df_upper = df.applymap(lambda x: x.upper() if isinstance(x, str) and x else x)
     match_rules = df.set_index(key_list)[output_value].to_dict()
@@ -32,4 +32,12 @@ def load_timepoint_mapping(external_path):
 
 def load_category_mapping(external_path):
     rules = load_mapping_rules(external_path, "category", ["LBCAT"],"LBTEST_edc")#"LBTEST_external"
+    return rules
+
+def load_term_mapping(external_path):
+    rules = load_mapping_rules(external_path, "category", ["LBTEST"],"LBTEST_edc")#"LBTEST_external"
+    return rules
+
+def load_result_mapping(external_path):
+    rules = load_mapping_rules(external_path, "result", ["External"],"EDC")#"LBTEST_external"
     return rules

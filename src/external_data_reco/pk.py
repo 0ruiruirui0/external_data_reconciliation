@@ -4,14 +4,14 @@ __version__ = "0.1.0"
 
 import logging
 import pandas as pd
-from data.sas_data import get_hcu
+from data.sas_data import get_pk
 from data.external_data import load_external_data
 from data.external_data import load_visit_mapping_rules
-from data.external_data import load_category_mapping
+from data.external_data import load_timepoint_mapping
 from utils.common import compute_flags_and_vars_lab
 
 
-def external_data_reco_hcu(data_path, external_path, output_path) -> pd.DataFrame:
+def external_data_reco_pk(data_path, external_path, output_path) -> pd.DataFrame:
     """
     This function is used to reconciliation of external data for the given data.
     """
@@ -21,14 +21,12 @@ def external_data_reco_hcu(data_path, external_path, output_path) -> pd.DataFram
 
     external = load_external_data(external_path)
     folder_mapping = load_visit_mapping_rules(external_path)
-    category_mapping = load_category_mapping(external_path)
+    tp_mapping = load_timepoint_mapping(external_path)
 
     # 处理外部数据,根据foldermapping，统一folder名称
-    external_data = \
-        external.loc[
-            (external.LBCAT == "Chemistry") | (external.LBCAT == "Hematology") | (external.LBCAT == "Urinalysis")][
-            ["SUBJID", "LBREFID", "VISIT", 'LBTPT', "LBTEST", "LBCAT", "LBSTAT", "LBREASND", "LBDTC"]].drop_duplicates(
-            keep='first')
+    external_data = external.loc[external["LBCAT"].str.contains("PK Storage Sample")][
+        ["SUBJID", "LBREFID", "VISIT", "LBCAT", "LBTPT", "LBSTAT", "LBREASND", "LBDTC"]].drop_duplicates(
+        keep='first')
 
     external_data["LBDTC_Date"] = external_data["LBDTC"].apply(
         lambda x: x.split("T")[0].strip() if x is not None else None)
@@ -40,17 +38,17 @@ def external_data_reco_hcu(data_path, external_path, output_path) -> pd.DataFram
         lambda x: folder_mapping.get((x.iloc[0],
                                       x.iloc[1]), ''), axis=1)
 
-    external_data['cat_trans'] = external_data[['LBCAT']].apply(
-        lambda x: category_mapping.get((x.iloc[0]), ''), axis=1)
+    external_data['tp_trans'] = external_data[['LBTPT']].apply(lambda x: tp_mapping.get((x.iloc[0]), 'Null'), axis=1)
+
     external_data['yn_trans'] = external_data['LBSTAT'].apply(lambda x: "Yes" if x == "Null" else "No")
 
-    hcu_sas = get_hcu(data_path)
+    pk_sas = get_pk(data_path)
     #
     # Merge data
-    data = pd.merge(external_data, hcu_sas, left_on=['SUBJID', 'visit_trans', 'LBCAT'],
+    data = pd.merge(external_data, pk_sas, left_on=['SUBJID', 'visit_trans', 'tp_trans'],
                     right_on=['Subject',
                               'FolderName',
-                              'cat'],
+                              'TP'],
                     how="outer")
 
     # # 反馈比较结果

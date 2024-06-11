@@ -2,11 +2,8 @@
 __author__ = "ruijing.li"
 __version__ = "0.1.0"
 
-import os
 import logging
 import pandas as pd
-from datetime import datetime
-from data.reader import read_excel
 from data.sas_data import get_subject_info
 from data.external_data import load_external_data
 from utils.common import compute_flags_and_vars_dm
@@ -21,7 +18,7 @@ def external_data_reco_dm(data_path, external_path, output_path) -> pd.DataFrame
     logging.info("Output path: {}".format(output_path))
 
     external_data = load_external_data(external_path)
-    dm_external_data = external_data[["SUBJID", "LBREFID", "YOB", "SEX"]].drop_duplicates(keep='first')
+    dm_external_data = external_data[["SUBJID", "LBREFID","LBCAT", "YOB", "SEX"]].drop_duplicates(keep='first')
     # 外部数据中的YOB原本是Float类型
     dm_external_data["YOB"] = dm_external_data["YOB"].apply(lambda x: int(x) if x is not None else None)
     dm_external_data["SUBJID"] = dm_external_data["SUBJID"].apply(lambda x: x.strip())
@@ -44,5 +41,15 @@ def external_data_reco_dm(data_path, external_path, output_path) -> pd.DataFrame
     data["SEX_trans"] = data.apply(lambda x: {"Male": "M", "Female": "F"}.get(x["SEX_y"], None), axis=1)
     # 反馈比较结果
     data = data.apply(compute_flags_and_vars_dm, axis=1)
+    data = data.sort_values(by=["Subject"])
+
+    data["cat"] = "DM"
+
+
+    #去除nan，None，Null
+    data = data.fillna("")
+    data = data.replace("None", "")
+    data = data.replace("Null", "")
+
     # Save data
     return data
