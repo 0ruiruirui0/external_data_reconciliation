@@ -5,21 +5,19 @@ __version__ = "0.1.0"
 import logging
 import pandas as pd
 from data.sas_data import get_pk
-from data.external_data import load_external_data
 from data.external_data import load_visit_mapping_rules
 from data.external_data import load_timepoint_mapping
 from utils.common import compute_flags_and_vars_lab
 
 
-def external_data_reco_pk(data_path, external_path, output_path) -> pd.DataFrame:
+def external_data_reco_pk(data_path,external_data, external_path) -> pd.DataFrame:
     """
     This function is used to reconciliation of external data for the given data.
     """
     logging.info("Start external data reconciliation...")
     logging.info("Data path: {}".format(data_path))
-    logging.info("Output path: {}".format(output_path))
 
-    external = load_external_data(external_path)
+    external = external_data
     folder_mapping = load_visit_mapping_rules(external_path)
     tp_mapping = load_timepoint_mapping(external_path)
 
@@ -40,7 +38,7 @@ def external_data_reco_pk(data_path, external_path, output_path) -> pd.DataFrame
 
     external_data['tp_trans'] = external_data[['LBTPT']].apply(lambda x: tp_mapping.get((x.iloc[0]), 'Null'), axis=1)
 
-    external_data['yn_trans'] = external_data['LBSTAT'].apply(lambda x: "Yes" if x == "Null" else "No")
+    external_data['yn_trans'] = external_data['LBSTAT'].apply(lambda x: "Yes" if x=='' else "No")
 
     pk_sas = get_pk(data_path)
     #
@@ -50,15 +48,15 @@ def external_data_reco_pk(data_path, external_path, output_path) -> pd.DataFrame
                               'FolderName',
                               'TP'],
                     how="outer")
+    #去除nan，None，Null
+    data = data.replace("None", "")
+    data = data.replace("Null", "")
+    data = data.replace("nan", "")
 
     # # 反馈比较结果
     data = data.apply(compute_flags_and_vars_lab, axis=1)
     data = data.sort_values(by=["Subject", "FolderSeq"])
 
-    #去除nan，None，Null
-    data = data.fillna("")
-    data = data.replace("None", "")
-    data = data.replace("Null", "")
 
     # Save data
 

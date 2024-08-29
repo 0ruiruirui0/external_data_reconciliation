@@ -6,10 +6,9 @@ import pandas as pd
 from data.reader import read_excel
 
 
-def load_external_data(external_path):
-    external_data = read_excel(external_path, "external_data")
-    return external_data
-
+# def load_external_data(external_path):
+#     external_data = read_excel(external_path, "external_data",sheet_name=)
+#     return external_data
 
 def load_mapping_rules(external_path, dict_name, key_list, output_value):
     # matching_rules_path = external_path + "matching_rules.xlsx"
@@ -19,6 +18,9 @@ def load_mapping_rules(external_path, dict_name, key_list, output_value):
     match_rules = df.set_index(key_list)[output_value].to_dict()
     return match_rules
 
+def load_visit_mapping_rules_hcu(external_path):
+    rules = load_mapping_rules(external_path, "folder", ["visit_name_external"], "visit_name_edc")
+    return rules
 
 def load_visit_mapping_rules(external_path):
     rules = load_mapping_rules(external_path, "folder", ["visit_name_external", "timepoint_external"], "visit_name_edc")

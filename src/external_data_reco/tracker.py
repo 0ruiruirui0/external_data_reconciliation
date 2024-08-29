@@ -4,19 +4,21 @@ __version__ = "0.1.0"
 
 import logging
 import pandas as pd
+from datetime import datetime
 from utils.config_utils import ISSUE_TYPE, ACTION_NEEDED
+from utils.common import sort_data
 
 
-def get_tracker(df1, df2, df3, df4) -> pd.DataFrame:
+def get_current_tracker(filename, *args) -> pd.DataFrame:
     # 创建一个空的数据框用于存储筛选过的数据
     data = pd.DataFrame()
-
     # 遍历每个数据框
-    for df in [df1, df2, df3, df4]:
+    for df in [*args]:
+        # 首次遍历时，定义需要保留的列
         columns_to_keep = ["SUBJID", "Subject", "VISIT", "InstanceName", "FolderSeq", "LBCAT", "cat", "var2",
                            "Issue_type", "Message",
                            "Var", "EDC", "External"]
-        filtered_df = df.loc[df["Message"].notna(), columns_to_keep]
+        filtered_df = df.loc[(df["Message"] != "") & (pd.notnull(df["Message"])), columns_to_keep]
         data = pd.concat([data, filtered_df])
 
     # # 生成一列新的数据，作为index
@@ -25,7 +27,7 @@ def get_tracker(df1, df2, df3, df4) -> pd.DataFrame:
 
     data["Protocol Number"] = 'CPL-01-302'
     data["Vendor Name"] = 'LabConnect'
-    data["Vendor Date"] = '02APR2024'
+    data["Vendor Date"] = filename[:9] if filename is not None else ""
 
     data["Subject Number"] = data.apply(
         lambda x: x["SUBJID"] if not pd.isnull(x["SUBJID"]) else x["Subject"], axis=1)
@@ -37,7 +39,8 @@ def get_tracker(df1, df2, df3, df4) -> pd.DataFrame:
         lambda x: x["LBCAT"] if not pd.isnull(x["LBCAT"]) else x["cat"], axis=1)
 
     # 将filtered_data全部转化成字符型
-    data = data.applymap(str)
+
+    data = data.apply(lambda x: x.astype(str))
 
     # 如果Var列中有多个变量，将其拆分成多行
     data["Var"] = data["Var"].apply(lambda x: x.split(";") if x is not None else None)
@@ -55,7 +58,8 @@ def get_tracker(df1, df2, df3, df4) -> pd.DataFrame:
     data["Message1"] = data.apply(
         lambda x: x["Message"][0] if x["Seq"] == "0" else x["Message"][int(x["Seq"]) - 1], axis=1)
 
-    data["Message1"] = data["Message1"].apply(lambda x: x.strip())
+    data["Message1"] = data["Message1"].apply(lambda x: '{0}:{1}'.format(datetime.now().strftime("%Y-%m-%d"),
+                                                                         x.strip()))
 
     data["The Record of Database"] = data.apply(
         lambda x: x["EDC"][0] if x["Seq"] == "0" else x["EDC"][int(x["Seq"]) - 1], axis=1)
@@ -71,29 +75,39 @@ def get_tracker(df1, df2, df3, df4) -> pd.DataFrame:
     issue_type_dict = dict(zip(ISSUE_TYPE, ACTION_NEEDED))
     data["Action Needed"] = data["Issue_type"].apply(lambda x: issue_type_dict.get(x, "Null"))
 
-    # 生成数据编号
-    data["Issues Number"] = range(1, len(data) + 1)
-    data["Central Lab Responder and Date (DD-MMM-DD): comments"] = ""
-
-
     # 重命名列名
     data = data.rename(columns={"Issue_type": "Issue Type",
                                 "Message1": "Data Manager Check Personnel and Date (DD-MMM-DD): comments",
                                 "Var": "Variable name"})
 
+    # 去除nan，None，Null
+    data = data.fillna("").replace({"None": "", "Null": "", "nan": ""})
+
+    # 生成数据编号
+    # data["Issues Number"] = range(1, len(data) + 1)
+    data["Central Lab Responder and Date (DD-MMM-DD): comments"] = ""
+
+    columns = ["Protocol Number", "Vendor Name", "Vendor Date", "Site Number", "Subject Number", "Visit",
+               "Test Name", "Variable name", "The Record of Database", "The Record of Central Laboratory",
+               "Data Manager Check Personnel and Date (DD-MMM-DD): comments",
+               "Central Lab Responder and Date (DD-MMM-DD): comments",
+               "Issue Type", "Action Needed"]
+
+    columns2 = [item.lower() for item in columns]
+
+    rename_dict = dict(zip(columns, columns2))
+
     # 重新排序列
-    data = data[
-        ["Issues Number", "Protocol Number", "Vendor Name", "Vendor Date", "Site Number", "Subject Number", "Visit",
-         "Test Name", "Variable name", "The Record of Database", "The Record of Central Laboratory",
-         "Data Manager Check Personnel and Date (DD-MMM-DD): comments","Central Lab Responder and Date (DD-MMM-DD): comments",
-         "Issue Type","Action Needed"]]
+    data = data[columns]
 
-    #去重，保留第一行
     data = data.drop_duplicates(keep='first')
+    data = data.sort_values(by=["Site Number", "Subject Number", "Visit", "Test Name", "Variable name"])
+    data = data.rename(columns=rename_dict)
+    data["solution"] = ""
+    data["status"] = ""
+    data["resolution date (dd-mmm-yyyy)"] = ""
 
-    #去除nan，None，Null
-    data = data.fillna("")
-    data = data.replace("None", "")
-    data = data.replace("Null", "")
+    print(data.columns)
 
     return data
+

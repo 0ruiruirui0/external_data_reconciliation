@@ -16,6 +16,8 @@ pandas = "^2.2.2"
 openpyxl = "^3.1.2"
 pyreadstat = "^1.2.7"
 sas7bdat = "^2.2.3"
+numpy = ">=1.26.4,<=1.26.4"
+datacompy = "^0.13.2"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.17.4"

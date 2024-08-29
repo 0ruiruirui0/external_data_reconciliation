@@ -43,7 +43,7 @@ def get_subject_info(sas_path) -> pd.DataFrame:
     ic_raw = read_sas_file(sas_path, "ic")
 
     dm = dm_raw[[*SYSTEM_COLUMNS, *["AGE", "SEX"]]].drop_duplicates(keep='first')
-    ic = ic_raw[[*SYSTEM_COLUMNS, *["ICDT"]]].drop_duplicates(keep='first')
+    ic = ic_raw[["Subject","ICDT"]].drop_duplicates(keep='first')
     ic["ICDT_Y"] = ic["ICDT"].apply(lambda x: x.split("/")[2] if x is not None else None)
     df = pd.merge(dm, ic, on="Subject", how="left")
     return df
