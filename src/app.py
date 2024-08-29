@@ -5,15 +5,9 @@ __version__ = "0.1.0"
 import time
 import tkinter as tk
 import logging
-import os
 import glob
-import sys
-import traceback
-import pandas as pd
-import datacompy
 from functools import partial
 from tkinter import filedialog
-from tkinter import messagebox
 from tkinter import ttk
 from tkinter import Label
 from src.data.writer import set_worksheet_format
